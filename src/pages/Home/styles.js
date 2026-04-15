@@ -17,14 +17,32 @@ export const Hero = styled.section`
   color: white;
   text-align: center;
   padding: 80px 20px;
-
   display: flex;          
   flex-direction: column; 
   align-items: center;    
   gap: 20px;              
   
-  h1 { font-size: 48px; margin-bottom: 10px; }
-  p { font-size: 18px; opacity: 0.9; margin-bottom: 30px; }
+  h1 { 
+    font-size: 48px; 
+    margin-bottom: 10px; 
+
+    /* Ajuste para celular */
+    @media (max-width: 768px) {
+      font-size: 32px; 
+    }
+  }
+
+  p { 
+    font-size: 18px; 
+    opacity: 0.9; 
+    margin-bottom: 30px; 
+    max-width: 800px;
+
+    /* Ajuste para celular */
+    @media (max-width: 768px) {
+      font-size: 15px;
+    }
+  }
 `;
 
 
@@ -51,40 +69,54 @@ export const Card = styled.div`
 // Este container vai alinhar os dois lado a lado
 export const SearchContainer = styled.div`
   display: flex;
-  justify-content: center; /* Centraliza na página */
-  align-items: center;     /* Alinha verticalmente */
-  gap: 15px;               /* Espaço entre o botão e o input */
-  margin-top: 30px;        /* Espaço em relação ao texto de cima */
+  flex-direction: column; 
+  gap: 12px;
   width: 100%;
-  max-width: 800px;        /* Largura máxima do conjunto */
-  margin-left: auto;       /* Auxilia na centralização */
-  margin-right: auto;      /* Auxilia na centralização */
+  max-width: 380px; /* Reduzi um pouco para ficar mais elegante no mobile */
+  margin: 20px auto 0;
+  padding: 0 20px;
+  box-sizing: border-box; /* Fundamental para o padding não empurrar a largura */
 `;
 
 // Ajuste o botão para não ter margem fixa e ocupar o mesmo espaço
 export const Button = styled.button`
-  background: white;
-  color: #1e40af;
+  background-color: #2563eb;
+  color: white;
+  padding: 12px 25px;
+  border-radius: 12px; /* Diminuí um pouco o arredondado para ficar mais moderno */
   border: none;
-  padding: 0 25px;
-  border-radius: 25px;
-  font-weight: bold;
   cursor: pointer;
-  height: 45px;    /* Altura fixa para ficar igual ao input */
-  flex: 1;         /* Faz com que ele tente ocupar o mesmo espaço que o input */
-  max-width: 250px; /* Limita o tamanho para não ficar gigante */
+  font-weight: bold;
+  font-size: 15px;
+  transition: background 0.2s;
+
+  &:hover {
+    background-color: #1e40af;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 48px; /* Altura fixa para não ter erro */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
-// Ajuste o input para ter a mesma altura e comportamento
 export const InputBusca = styled.input`
-  padding: 0 20px;
-  height: 45px;    /* Mesma altura do botão */
-  border-radius: 25px;
-  border: none;
+  width: 100%; 
+  height: 48px;
+  padding: 0 15px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
   outline: none;
-  font-size: 16px;
-  flex: 1;         /* Faz com que ele tente ocupar o mesmo espaço que o botão */
-  max-width: 250px; /* Limita o tamanho */
+  box-sizing: border-box; /* A "mágica" para não vazar mais */
+  text-align: center;
+
+  &:focus {
+    border-color: #2563eb;
+  }
 `;
 
 export const Overlay = styled.div`
@@ -200,15 +232,14 @@ export const ProductCard = styled.div`
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  cursor: pointer;
   transition: transform 0.2s;
 
-  &:hover {
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
+  &:hover { transform: scale(1.01); }
 
-  @media (max-width: 600px) {
-    flex-direction: column; /* No celular a foto fica em cima */
+  @media (max-width: 650px) {
+    flex-direction: column; /* Imagem vai para cima do texto */
+    text-align: center;     /* Centraliza o texto no mobile */
   }
 `;
 
@@ -216,7 +247,11 @@ export const ProductImage = styled.img`
   width: 200px;
   height: 200px;
   object-fit: cover;
-  background: #f8fafc;
+
+  @media (max-width: 650px) {
+    width: 100%;  /* Largura total no celular */
+    height: 250px; /* Aumenta um pouco a altura para destacar */
+  }
 `;
 
 export const ProductInfo = styled.div`
@@ -265,21 +300,18 @@ export const ProductModalContent = styled.div`
   background: white;
   width: 100%;
   max-width: 800px;
-  max-height: 90vh;
-  border-radius: 20px;
   padding: 30px;
+  border-radius: 20px;
   position: relative;
-  overflow-y: auto; /* Permite rolar se o conteúdo for grande */
+  
+  /* Garante que o modal role se o conteúdo for longo */
+  max-height: 90vh;
+  overflow-y: auto;
 
-  .close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #64748b;
+  @media (max-width: 768px) {
+    width: 95%;   /* Quase encosta nas bordas */
+    padding: 20px;
+    margin: 10px;
   }
 `;
 
