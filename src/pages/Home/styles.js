@@ -26,7 +26,6 @@ export const Hero = styled.section`
     font-size: 48px; 
     margin-bottom: 10px; 
 
-    /* Ajuste para celular */
     @media (max-width: 768px) {
       font-size: 32px; 
     }
@@ -38,7 +37,6 @@ export const Hero = styled.section`
     margin-bottom: 30px; 
     max-width: 800px;
 
-    /* Ajuste para celular */
     @media (max-width: 768px) {
       font-size: 15px;
     }
@@ -51,7 +49,7 @@ export const CategoryGrid = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   max-width: 1000px;
-  margin: -40px auto 50px; /* Faz os cards "subirem" sobre o azul */
+  margin: -40px auto 50px; 
   padding: 0 20px;
 `;
 
@@ -66,56 +64,56 @@ export const Card = styled.div`
   h3 { margin: 10px 0 5px; font-size: 16px; }
   span { color: #666; font-size: 12px; }`;
 
-// Este container vai alinhar os dois lado a lado
 export const SearchContainer = styled.div`
   display: flex;
-  flex-direction: column; 
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  max-width: 380px; /* Reduzi um pouco para ficar mais elegante no mobile */
-  margin: 20px auto 0;
-  padding: 0 20px;
-  box-sizing: border-box; /* Fundamental para o padding não empurrar a largura */
-`;
-
-// Ajuste o botão para não ter margem fixa e ocupar o mesmo espaço
-export const Button = styled.button`
-  background-color: #2563eb;
-  color: white;
-  padding: 12px 25px;
-  border-radius: 12px; /* Diminuí um pouco o arredondado para ficar mais moderno */
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 15px;
-  transition: background 0.2s;
-
-  &:hover {
-    background-color: #1e40af;
-  }
+  margin: 30px auto 0;
+  
+  /* Configuração para PC */
+  flex-direction: row; 
+  gap: 110px; 
 
   @media (max-width: 768px) {
-    width: 100%;
-    height: 48px; /* Altura fixa para não ter erro */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    /* Resetamos o gap e usamos margin para não empurrar para os lados */
+    gap: 15px; 
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+`;
+
+export const Button = styled.button`
+  width: 220px;
+  height: 50px;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    width: 100%; /* Ocupa a largura disponível no celular */
+    max-width: 320px; /* Impede que fique absurdamente largo em tablets */
   }
 `;
 
 export const InputBusca = styled.input`
-  width: 100%; 
-  height: 48px;
+  width: 220px;
+  height: 50px;
   padding: 0 15px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  font-size: 15px;
   outline: none;
-  box-sizing: border-box; /* A "mágica" para não vazar mais */
   text-align: center;
+  box-sizing: border-box; /* ESSENCIAL para não vazar a borda */
 
-  &:focus {
-    border-color: #2563eb;
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 320px;
   }
 `;
 
@@ -166,7 +164,7 @@ export const SocialButton = styled.button`
 
 export const BrandSection = styled.section`
   padding: 40px 20px;
-  background-color: #f8fafc; /* Um cinza bem clarinho */
+  background-color: #f8fafc; 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -186,7 +184,7 @@ export const BrandGrid = styled.div`
   justify-content: center; 
   align-items: center;     
   flex-wrap: wrap;         
-  gap: 20px 45px;          /* Aumentei um pouquinho o espaço lateral */
+  gap: 20px 45px;          
   margin: 30px auto 0;     
   max-width: 900px;        
   padding: 0 20px;
@@ -195,18 +193,18 @@ export const BrandGrid = styled.div`
 export const BrandName = styled.span`
   font-size: 13px;         
   font-weight: 800;
-  color: #64748b;          /* <--- Cinza mais escuro e visível */
+  color: #64748b;          
   text-transform: uppercase;
-  letter-spacing: 1.8px;   /* Espaçamento entre letras mais elegante */
+  letter-spacing: 1.8px;   
   cursor: default;
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
-  opacity: 0.8;            /* Deixa levemente suave, mas ainda bem visível */
+  opacity: 0.8;            
 
   &:hover {
-    color: #1e40af;        /* Um azul um pouco mais profundo no hover */
-    opacity: 1;            /* Fica 100% nítido no hover */
-    transform: translateY(-2px); /* Efeito de levante suave */
+    color: #1e40af;        
+    opacity: 1;            
+    transform: translateY(-2px); 
   }
 `;
 
@@ -238,8 +236,8 @@ export const ProductCard = styled.div`
   &:hover { transform: scale(1.01); }
 
   @media (max-width: 650px) {
-    flex-direction: column; /* Imagem vai para cima do texto */
-    text-align: center;     /* Centraliza o texto no mobile */
+    flex-direction: column; 
+    text-align: center;     
   }
 `;
 
@@ -249,8 +247,8 @@ export const ProductImage = styled.img`
   object-fit: cover;
 
   @media (max-width: 650px) {
-    width: 100%;  /* Largura total no celular */
-    height: 250px; /* Aumenta um pouco a altura para destacar */
+    width: 100%;  
+    height: 250px; 
   }
 `;
 
@@ -276,24 +274,10 @@ export const ProductInfo = styled.div`
 `;
 
 export const Stars = styled.div`
-  color: #fbbf24; /* Cor dourada das estrelas */
+  color: #fbbf24; 
   font-size: 18px;
   display: flex;
   gap: 2px;
-`;
-
-export const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  padding: 20px;
 `;
 
 export const ProductModalContent = styled.div`
@@ -304,12 +288,12 @@ export const ProductModalContent = styled.div`
   border-radius: 20px;
   position: relative;
   
-  /* Garante que o modal role se o conteúdo for longo */
+  
   max-height: 90vh;
   overflow-y: auto;
 
   @media (max-width: 768px) {
-    width: 95%;   /* Quase encosta nas bordas */
+    width: 95%;   
     padding: 20px;
     margin: 10px;
   }
@@ -385,4 +369,65 @@ export const CommentCard = styled.div`
   
   strong { display: block; font-size: 14px; margin-bottom: 5px; }
   p { font-size: 14px; color: #475569; }
+`;
+// MODAL DE ADICIONAR PRODUTO(AVALIAR) 
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+export const ModalContent = styled.div`
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  h2 {
+    color: #1e40af;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+`;
+
+export const FormInput = styled.input`
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #2563eb;
+  }
+`;
+
+export const ActionButton = styled(Button)`
+  width: 100%;
+  margin-top: 10px;
+`;
+
+export const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 5px;
+
+  &:hover {
+    color: #ef4444;
+  }
 `;
