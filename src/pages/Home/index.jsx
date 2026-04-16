@@ -14,16 +14,24 @@ function Home() {
   const [termoBusca, setTermoBusca] = useState('');
   const [produtos, setProdutos] = useState([]);
 
-  // Estados do formulário
   const [nome, setNome] = useState('');
   const [marca, setMarca] = useState('');
   const [preco, setPreco] = useState('');
   const [descricao, setDescricao] = useState('');
   const [nota, setNota] = useState('5');
   const [linkCompra, setLinkCompra] = useState('');
-  const [imagemBase64, setImagemBase64] = useState(''); // Estado para a imagem
+  const [imagensBase64, setImagensBase64] = useState([]); // Agora é um array para várias fotos
 
-  // BUSCAR DADOS NO FIREBASE
+  // FUNÇÃO DE MÁSCARA MONETÁRIA (RECUPERADA)
+  const formatarMoeda = (valor) => {
+    let v = valor.replace(/\D/g, '');
+    v = (v / 100).toFixed(2) + '';
+    v = v.replace(".", ",");
+    v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+    v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+    return "R$ " + v;
+  };
+
   const buscarProdutos = async () => {
     try {
       const produtosCol = collection(db, 'produtos');
@@ -40,41 +48,39 @@ function Home() {
     buscarProdutos();
   }, []);
 
-  // FUNÇÃO PARA LER A IMAGEM DO COMPUTADOR (RESTAURADA)
+  // FUNÇÃO PARA ADICIONAR MÚLTIPLAS FOTOS
   const handleFileChange = (e) => {
-    const arquivo = e.target.files[0];
-    if (arquivo) {
+    const arquivos = Array.from(e.target.files);
+    arquivos.forEach(arquivo => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagemBase64(reader.result); // Converte a imagem para uma string base64
+        setImagensBase64((prev) => [...prev, reader.result]);
       };
       reader.readAsDataURL(arquivo);
-    }
+    });
   };
 
   const handleSalvar = async () => {
-    // Adicionei a imagem como campo obrigatório
-    if (!nome || !marca || !descricao || !imagemBase64) {
-      return alert("Preencha os campos obrigatórios e adicione uma imagem!");
+    if (!nome || !marca || !descricao || imagensBase64.length === 0) {
+      return alert("Preencha os campos obrigatórios e adicione ao menos uma imagem!");
     }
     
     try {
-      // SALVAR NO FIREBASE COM A IMAGEM
       await addDoc(collection(db, 'produtos'), {
         nome, 
         marca, 
         preco, 
         description: descricao,
-        stars: '★'.repeat(Number(nota)) + '☆'.repeat(5 - Number(nota)), // Corrigido para "stars" conforme seu styles.js original
+        stars: '★'.repeat(Number(nota)) + '☆'.repeat(5 - Number(nota)), 
         linkCompra: linkCompra.startsWith('http') ? linkCompra : `https://${linkCompra}`,
-        imagem: imagemBase64, // Agora salva a imagem real que o usuário escolheu
+        imagens: imagensBase64, // Array de fotos
+        imagemPrincipal: imagensBase64[0], // Para a vitrine
         criadoEm: new Date()
       });
       
       setIsModalOpen(false);
-      // Limpar os campos após salvar
-      setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagemBase64('');
-      buscarProdutos(); // Recarrega a lista para mostrar o novo produto
+      setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]);
+      buscarProdutos(); 
     } catch (e) {
       alert("Erro ao salvar no Firebase: " + e.message);
     }
@@ -102,10 +108,13 @@ function Home() {
             <h2>Nova Avaliação</h2>
             <FormInput placeholder="Nome do Produto" value={nome} onChange={(e) => setNome(e.target.value)} />
             <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
-            <FormInput placeholder="Preço (ex: R$ 50,00)" value={preco} onChange={(e) => setPreco(e.target.value)} />
+            <FormInput 
+               placeholder="Preço (ex: R$ 0,00)" 
+               value={preco} 
+               onChange={(e) => setPreco(formatarMoeda(e.target.value))} 
+            />
             <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
 
-            {/* SELETOR DE NOTA (RESTAURADO) */}
             <div style={{ textAlign: 'left', marginBottom: '10px' }}>
               <label style={{ fontSize: '12px', color: '#64748b' }}>Sua nota:</label>
               <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }}>
@@ -119,7 +128,6 @@ function Home() {
 
             <textarea placeholder="Sua opinião..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', marginBottom: '10px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontFamily: 'inherit' }} />
 
-            {/* BOTÃO DE ADICIONAR IMAGEM (RESTAURADO) */}
             <div style={{ textAlign: 'left', marginBottom: '10px' }}>
               <label htmlFor="file-upload" className="custom-file-upload" style={{
                 display: 'inline-block',
@@ -131,13 +139,17 @@ function Home() {
                 fontSize: '12px',
                 border: '1px solid #e2e8f0'
               }}>
-                📷 Adicionar Imagem do Produto
+                📷 Adicionar Fotos (Múltiplas)
               </label>
-              <input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              {imagemBase64 && <img src={imagemBase64} alt="Preview" style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', marginLeft: '10px', verticalAlign: 'middle' }} />}
+              <input id="file-upload" type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
+              
+              <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' }}>
+                {imagensBase64.map((img, index) => (
+                  <img key={index} src={img} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '5px', objectFit: 'cover' }} />
+                ))}
+              </div>
             </div>
 
-            {/* TEXTO DO BOTÃO ALTERADO (ALTERAÇÃO SOLICITADA) */}
             <ActionButton onClick={handleSalvar}>Adicionar Avaliação</ActionButton>
             <CloseButton onClick={() => setIsModalOpen(false)}>Cancelar</CloseButton>
           </ModalContent>
@@ -148,10 +160,9 @@ function Home() {
       <ReviewsContainer>
         {produtosFiltrados.map(p => (
           <ProductCard key={p.id} onClick={() => setSelectedProduct(p)}>
-            <ProductImage src={p.imagem} />
+            <ProductImage src={p.imagemPrincipal || p.imagens?.[0]} />
             <ProductInfo>
               <h3>{p.nome}</h3>
-              {/* Note que aqui você deve usar p.stars, pois é como está sendo salvo agora */}
               <Stars>{p.stars}</Stars> 
             </ProductInfo>
           </ProductCard>
@@ -161,7 +172,11 @@ function Home() {
       {selectedProduct && (
         <ModalOverlay onClick={() => setSelectedProduct(null)}>
           <ProductModalContent onClick={(e) => e.stopPropagation()}>
-            <img src={selectedProduct.imagem} alt={selectedProduct.nome} style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '10px', marginBottom: '15px' }} />
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '10px' }}>
+              {(selectedProduct.imagens || [selectedProduct.imagemPrincipal]).map((img, idx) => (
+                <img key={idx} src={img} style={{ height: '200px', borderRadius: '10px' }} alt="Produto" />
+              ))}
+            </div>
             <h2>{selectedProduct.nome}</h2>
             <p style={{ margin: '10px 0', color: '#64748b' }}>{selectedProduct.marca}</p>
             <h3 style={{ color: '#2563eb', marginBottom: '15px' }}>{selectedProduct.preco}</h3>
