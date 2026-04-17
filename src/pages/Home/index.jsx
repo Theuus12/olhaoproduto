@@ -30,6 +30,7 @@ function Home() {
   const [nomeCompleto, setNomeCompleto] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState(''); // NOVO ESTADO
   const [lembrar, setLembrar] = useState(false);
 
   // Estados do Produto
@@ -42,7 +43,6 @@ function Home() {
   const [linkCompra, setLinkCompra] = useState('');
   const [imagensBase64, setImagensBase64] = useState([]);
 
-  // Monitora o status do login e carrega dados salvos
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUsuarioLogado(user);
@@ -60,20 +60,13 @@ function Home() {
     return () => unsubscribe();
   }, []);
 
-  // FUNÇÃO DE MÁSCARA MONETÁRIA
   const formatarMoeda = (valor, tipoMoeda) => {
     let v = valor.replace(/\D/g, '');
     v = (v / 100).toFixed(2) + '';
     v = v.replace(".", ",");
     v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
     v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-    
-    const simbolos = {
-      BRL: 'R$ ',
-      USD: '$ ',
-      EUR: '€ '
-    };
-    
+    const simbolos = { BRL: 'R$ ', USD: '$ ', EUR: '€ ' };
     return simbolos[tipoMoeda] + v;
   };
 
@@ -118,14 +111,27 @@ function Home() {
     }
   };
 
+  // FUNÇÃO DE CADASTRO COM CONFIRMAÇÃO DE SENHA
   const handleCadastro = async (e) => {
     e.preventDefault();
-    if (!nomeCompleto || !email || !senha) return alert("Preencha todos os campos!");
+    if (!nomeCompleto || !email || !senha || !confirmarSenha) {
+      return alert("Preencha todos os campos!");
+    }
+
+    if (senha !== confirmarSenha) {
+      return alert("As senhas não coincidem!");
+    }
+
+    if (senha.length < 6) {
+      return alert("A senha deve ter pelo menos 6 caracteres!");
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
       await updateProfile(userCredential.user, { displayName: nomeCompleto });
       alert(`Bem-vindo, ${nomeCompleto}!`);
       setIsRegisterModalOpen(false);
+      setConfirmarSenha(''); // Limpa o campo de confirmação
     } catch (error) {
       alert("Erro ao cadastrar: " + error.message);
     }
@@ -136,37 +142,27 @@ function Home() {
     alert("Você saiu da conta.");
   };
 
-  // NOVA FUNÇÃO PARA CONTROLAR A ABERTURA DO MODAL DE AVALIAÇÃO
   const handleAbrirModalAvaliacao = () => {
-    if (!usuarioLogado) {
-      return alert("Você precisa estar logado para avaliar um produto!");
-    }
+    if (!usuarioLogado) return alert("Você precisa estar logado para avaliar um produto!");
     setIsModalOpen(true);
   };
 
   const handleSalvar = async () => {
-    // Trava de segurança no salvamento
-    if (!usuarioLogado) {
-      return alert("Ação não permitida. Faça login primeiro.");
-    }
-
+    if (!usuarioLogado) return alert("Ação não permitida. Faça login primeiro.");
     if (!nome || !marca || !descricao || imagensBase64.length === 0) {
       return alert("Preencha os campos obrigatórios e adicione ao menos uma imagem!");
     }
     try {
       await addDoc(collection(db, 'produtos'), {
-        nome, 
-        marca, 
-        preco, 
-        moeda,
+        nome, marca, preco, moeda,
         description: descricao,
         stars: '★'.repeat(Number(nota)) + '☆'.repeat(5 - Number(nota)), 
         linkCompra: linkCompra.startsWith('http') ? linkCompra : `https://${linkCompra}`,
         imagens: imagensBase64,
         imagemPrincipal: imagensBase64[0],
         criadoEm: new Date(),
-        autor: usuarioLogado.displayName, // Agora sempre terá um autor logado
-        autorId: usuarioLogado.uid // Guardamos o ID único também por segurança
+        autor: usuarioLogado.displayName,
+        autorId: usuarioLogado.uid
       });
       setIsModalOpen(false);
       setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]);
@@ -202,7 +198,6 @@ function Home() {
       <Hero>
         <h1>Avaliações Reais de Eletrônicos</h1>
         <SearchContainer>
-          {/* BOTÃO ATUALIZADO COM A NOVA FUNÇÃO DE TRAVA */}
           <Button onClick={handleAbrirModalAvaliacao}>+ Avaliar Produto</Button>
           <InputBusca placeholder="Buscar produtos..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} />
         </SearchContainer>
@@ -225,7 +220,7 @@ function Home() {
         </ModalOverlay>
       )}
 
-      {/* MODAL DE CADASTRO */}
+      {/* MODAL DE CADASTRO COM CONFIRMAÇÃO */}
       {isRegisterModalOpen && (
         <ModalOverlay>
           <ModalContent>
@@ -233,6 +228,7 @@ function Home() {
             <FormInput placeholder="Nome completo" value={nomeCompleto} onChange={(e) => setNomeCompleto(e.target.value)} />
             <FormInput type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
             <FormInput type="password" placeholder="Crie uma senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
+            <FormInput type="password" placeholder="Confirme sua senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} />
             <ActionButton onClick={handleCadastro}>Cadastrar</ActionButton>
             <CloseButton onClick={() => setIsRegisterModalOpen(false)}>Voltar</CloseButton>
           </ModalContent>
@@ -248,24 +244,12 @@ function Home() {
             <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
             
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <select 
-                value={moeda} 
-                onChange={(e) => {
-                  setMoeda(e.target.value);
-                  setPreco(''); 
-                }}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white' }}
-              >
+              <select value={moeda} onChange={(e) => { setMoeda(e.target.value); setPreco(''); }} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white' }}>
                 <option value="BRL">R$ (Real)</option>
                 <option value="USD">$ (Dólar)</option>
                 <option value="EUR">€ (Euro)</option>
               </select>
-              <FormInput 
-                style={{ marginBottom: 0, flex: 1 }}
-                placeholder={`Preço em ${moeda}`} 
-                value={preco} 
-                onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} 
-              />
+              <FormInput style={{ marginBottom: 0, flex: 1 }} placeholder={`Preço em ${moeda}`} value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
             </div>
 
             <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
