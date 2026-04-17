@@ -23,16 +23,18 @@ function Home() {
   const [termoBusca, setTermoBusca] = useState('');
   const [produtos, setProdutos] = useState([]);
   
+  // NAVEGAÇÃO
   const [telaAtiva, setTelaAtiva] = useState('home'); 
   const [abaPerfil, setAbaPerfil] = useState('dados'); 
 
+  // USUÁRIO
   const [usuarioLogado, setUsuarioLogado] = useState(null);
-
   const [nomeCompleto, setNomeCompleto] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
 
+  // PRODUTO (TODOS OS CAMPOS MANTIDOS)
   const [nome, setNome] = useState('');
   const [marca, setMarca] = useState('');
   const [preco, setPreco] = useState('');
@@ -89,33 +91,35 @@ function Home() {
       await signInWithEmailAndPassword(auth, email, senha);
       setIsLoginModalOpen(false);
     } catch (error) {
-      alert("Erro ao entrar.");
+      alert("Erro ao entrar: Verifique e-mail e senha.");
     }
   };
 
   const handleCadastro = async (e) => {
     e.preventDefault();
-    if (senha !== confirmarSenha) return alert("Senhas diferentes!");
+    if (senha !== confirmarSenha) return alert("As senhas não coincidem!");
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
       await updateProfile(userCredential.user, { displayName: nomeCompleto });
       setIsRegisterModalOpen(false);
     } catch (error) {
-      alert("Erro ao cadastrar.");
+      alert("Erro ao cadastrar: " + error.message);
     }
   };
 
   const handleLogout = () => {
     signOut(auth);
     setTelaAtiva('home');
-    alert("Você saiu.");
+    alert("Você saiu da conta.");
   };
 
   const handleSalvar = async () => {
-    if (!usuarioLogado) return alert("Logue primeiro!");
+    if (!usuarioLogado) return alert("Você precisa estar logado!");
+    
     if (!nome || !marca || !descricao || imagensBase64.length === 0) {
-        return alert("Preencha os campos obrigatórios e adicione fotos!");
+        return alert("Preencha Nome, Marca, Descrição e adicione Fotos!");
     }
+
     try {
       await addDoc(collection(db, 'produtos'), {
         nome, 
@@ -128,15 +132,18 @@ function Home() {
         imagens: imagensBase64,
         imagemPrincipal: imagensBase64[0],
         criadoEm: new Date(),
-        autor: usuarioLogado.displayName,
+        autor: usuarioLogado.displayName || "Usuário",
         autorId: usuarioLogado.uid
       });
+
+      alert("Avaliação postada com sucesso!");
       setIsModalOpen(false);
-      // Reset
+      // Reseta todos os campos
       setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]);
       buscarProdutos(); 
     } catch (e) {
-      alert("Erro ao salvar.");
+      console.error(e);
+      alert("Erro ao salvar: " + e.message);
     }
   };
 
@@ -153,12 +160,12 @@ function Home() {
               <span onClick={() => setTelaAtiva('perfil')} style={{ fontSize: '14px', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
                 Olá, {usuarioLogado.displayName}
               </span>
-              <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer' }}>Sair</button>
+              <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' }}>Sair</button>
             </>
           ) : (
             <>
-              <button onClick={() => setIsLoginModalOpen(true)} style={{ background: 'transparent', color: '#2563eb', border: '1px solid #2563eb', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer' }}>Entrar</button>
-              <button onClick={() => setIsRegisterModalOpen(true)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer' }}>Cadastrar</button>
+              <button onClick={() => setIsLoginModalOpen(true)} style={{ background: 'transparent', color: '#2563eb', border: '1px solid #2563eb', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' }}>Entrar</button>
+              <button onClick={() => setIsRegisterModalOpen(true)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: '600' }}>Cadastrar</button>
             </>
           )}
         </div>
@@ -169,7 +176,7 @@ function Home() {
           <Hero>
             <h1>Avaliações Reais de Eletrônicos</h1>
             <SearchContainer>
-              <Button onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")}>+ Avaliar Produto</Button>
+              <Button onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login para avaliar!")}>+ Avaliar Produto</Button>
               <InputBusca placeholder="Buscar produtos..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} />
             </SearchContainer>
           </Hero>
@@ -190,17 +197,19 @@ function Home() {
           </ReviewsContainer>
         </>
       ) : (
+        /* PÁGINA DE PERFIL */
         <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', background: 'white', borderRadius: '15px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
           <h2 style={{ marginBottom: '20px' }}>Minha Conta</h2>
           <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #e2e8f0', marginBottom: '20px' }}>
-            <button onClick={() => setAbaPerfil('dados')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'dados' ? '2px solid #2563eb' : 'none', fontWeight: 'bold' }}>Dados da Conta</button>
-            <button onClick={() => setAbaPerfil('minhas-avaliacoes')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'minhas-avaliacoes' ? '2px solid #2563eb' : 'none', fontWeight: 'bold' }}>Minhas Avaliações</button>
+            <button onClick={() => setAbaPerfil('dados')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'dados' ? '2px solid #2563eb' : 'none', fontWeight: 'bold', color: abaPerfil === 'dados' ? '#2563eb' : '#64748b' }}>Dados da Conta</button>
+            <button onClick={() => setAbaPerfil('minhas-avaliacoes')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'minhas-avaliacoes' ? '2px solid #2563eb' : 'none', fontWeight: 'bold', color: abaPerfil === 'minhas-avaliacoes' ? '#2563eb' : '#64748b' }}>Minhas Avaliações</button>
           </div>
+          
           {abaPerfil === 'dados' ? (
-            <div style={{ textAlign: 'left' }}>
+            <div style={{ textAlign: 'left', lineHeight: '2' }}>
               <p><strong>Nome:</strong> {usuarioLogado?.displayName}</p>
               <p><strong>E-mail:</strong> {usuarioLogado?.email}</p>
-              <button onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}>Voltar para Início</button>
+              <button onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>Voltar para Início</button>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
@@ -220,8 +229,8 @@ function Home() {
       {isLoginModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Acesse sua conta</h2>
-          <FormInput type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <FormInput type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <FormInput type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <FormInput type="password" placeholder="Sua senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
           <ActionButton onClick={handleLogin}>Entrar</ActionButton>
           <CloseButton onClick={() => setIsLoginModalOpen(false)}>Cancelar</CloseButton>
         </ModalContent></ModalOverlay>
@@ -232,15 +241,15 @@ function Home() {
         <ModalOverlay><ModalContent>
           <h2>Crie sua conta</h2>
           <FormInput placeholder="Nome completo" value={nomeCompleto} onChange={(e) => setNomeCompleto(e.target.value)} />
-          <FormInput type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <FormInput type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
-          <FormInput type="password" placeholder="Confirmar" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} />
+          <FormInput type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <FormInput type="password" placeholder="Crie uma senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <FormInput type="password" placeholder="Confirme sua senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} />
           <ActionButton onClick={handleCadastro}>Cadastrar</ActionButton>
           <CloseButton onClick={() => setIsRegisterModalOpen(false)}>Voltar</CloseButton>
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL DE AVALIAÇÃO - TUDO RECUPERADO AQUI */}
+      {/* MODAL DE AVALIAÇÃO (TODOS OS CAMPOS RECUPERADOS) */}
       {isModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Nova Avaliação</h2>
@@ -248,19 +257,19 @@ function Home() {
           <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
           
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <select value={moeda} onChange={(e) => {setMoeda(e.target.value); setPreco('');}} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <option value="BRL">R$</option>
-              <option value="USD">$</option>
-              <option value="EUR">€</option>
+            <select value={moeda} onChange={(e) => {setMoeda(e.target.value); setPreco('');}} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white' }}>
+              <option value="BRL">R$ (Real)</option>
+              <option value="USD">$ (Dólar)</option>
+              <option value="EUR">€ (Euro)</option>
             </select>
-            <FormInput style={{ flex: 1, marginBottom: 0 }} placeholder="Preço" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
+            <FormInput style={{ flex: 1, marginBottom: 0 }} placeholder={`Preço em ${moeda}`} value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
           </div>
 
           <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
 
           <div style={{ textAlign: 'left', marginBottom: '10px' }}>
             <label style={{ fontSize: '12px', color: '#64748b' }}>Sua nota:</label>
-            <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }}>
               <option value="5">5 Estrelas</option>
               <option value="4">4 Estrelas</option>
               <option value="3">3 Estrelas</option>
@@ -271,10 +280,12 @@ function Home() {
 
           <textarea placeholder="Sua opinião..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }} />
           
-          <input type="file" multiple onChange={handleFileChange} style={{ marginBottom: '10px' }} />
-          
-          <div style={{ display: 'flex', gap: '5px', marginBottom: '15px', flexWrap: 'wrap' }}>
-            {imagensBase64.map((img, i) => <img key={i} src={img} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '5px' }} />)}
+          <div style={{ textAlign: 'left', marginBottom: '10px' }}>
+            <label htmlFor="file-upload" style={{ display: 'inline-block', padding: '10px 15px', cursor: 'pointer', background: '#f1f5f9', color: '#64748b', borderRadius: '8px', fontSize: '12px', border: '1px solid #e2e8f0' }}>📷 Adicionar Fotos</label>
+            <input id="file-upload" type="file" accept="image/*" multiple onChange={handleFileChange} style={{ display: 'none' }} />
+            <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' }}>
+              {imagensBase64.map((img, i) => <img key={i} src={img} style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '5px', border: '1px solid #e2e8f0' }} />)}
+            </div>
           </div>
 
           <ActionButton onClick={handleSalvar}>Postar Avaliação</ActionButton>
@@ -282,20 +293,20 @@ function Home() {
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL DE DETALHES */}
+      {/* MODAL DE DETALHES (EXIBINDO TUDO) */}
       {selectedProduct && (
         <ModalOverlay onClick={() => setSelectedProduct(null)}>
           <ProductModalContent onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '10px' }}>
                 {(selectedProduct.imagens || [selectedProduct.imagemPrincipal]).map((img, idx) => (
-                    <img key={idx} src={img} style={{ height: '200px', borderRadius: '10px' }} alt="Produto" />
+                    <img key={idx} src={img} style={{ height: '220px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} alt="Produto" />
                 ))}
             </div>
             <h2>{selectedProduct.nome}</h2>
-            <p style={{ color: '#2563eb', fontWeight: 'bold' }}>Avaliado por: {selectedProduct.autor || 'Anônimo'}</p>
+            <p style={{ color: '#2563eb', fontWeight: 'bold', marginBottom: '5px' }}>Avaliado por: {selectedProduct.autor || 'Anônimo'}</p>
             <Stars>{selectedProduct.stars}</Stars>
-            <h3 style={{ margin: '10px 0' }}>{selectedProduct.preco}</h3>
-            <p style={{ margin: '15px 0', padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>{selectedProduct.description}</p>
+            <h3 style={{ margin: '15px 0', color: '#1e293b' }}>{selectedProduct.preco}</h3>
+            <p style={{ margin: '15px 0', padding: '15px', background: '#f8fafc', borderRadius: '8px', color: '#475569', lineHeight: '1.6' }}>"{selectedProduct.description}"</p>
             <BuyButton href={selectedProduct.linkCompra} target="_blank">Onde Comprar</BuyButton>
             <CloseButton onClick={() => setSelectedProduct(null)} style={{ marginTop: '10px' }}>Voltar</CloseButton>
           </ProductModalContent>
