@@ -113,20 +113,27 @@ function Home() {
 
   const handleSalvar = async () => {
     if (!usuarioLogado) return alert("Logue primeiro!");
+    if (!nome || !marca || !descricao || imagensBase64.length === 0) {
+        return alert("Preencha os campos obrigatórios e adicione fotos!");
+    }
     try {
       await addDoc(collection(db, 'produtos'), {
-        nome, marca, preco, moeda,
+        nome, 
+        marca, 
+        preco, 
+        moeda,
         description: descricao,
         stars: '★'.repeat(Number(nota)) + '☆'.repeat(5 - Number(nota)), 
-        linkCompra,
+        linkCompra: linkCompra.startsWith('http') ? linkCompra : `https://${linkCompra}`,
         imagens: imagensBase64,
         imagemPrincipal: imagensBase64[0],
         criadoEm: new Date(),
         autor: usuarioLogado.displayName,
-        autorId: usuarioLogado.uid // CRITICAL: Para o filtro de "Minhas Avaliações"
+        autorId: usuarioLogado.uid
       });
       setIsModalOpen(false);
-      setNome(''); setMarca(''); setPreco(''); setDescricao(''); setImagensBase64([]);
+      // Reset
+      setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]);
       buscarProdutos(); 
     } catch (e) {
       alert("Erro ao salvar.");
@@ -174,8 +181,8 @@ function Home() {
                 <ProductImage src={p.imagemPrincipal} />
                 <ProductInfo>
                   <h3>{p.nome}</h3>
-                  {/* EXIBINDO O AUTOR NA HOME */}
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0' }}>Por: {p.autor || 'Anônimo'}</p>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0' }}>{p.marca}</p>
+                  <p style={{ fontSize: '11px', color: '#94a3b8' }}>Por: {p.autor || 'Anônimo'}</p>
                   <Stars>{p.stars}</Stars> 
                 </ProductInfo>
               </ProductCard>
@@ -193,14 +200,15 @@ function Home() {
             <div style={{ textAlign: 'left' }}>
               <p><strong>Nome:</strong> {usuarioLogado?.displayName}</p>
               <p><strong>E-mail:</strong> {usuarioLogado?.email}</p>
-              <button onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}>Voltar</button>
+              <button onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}>Voltar para Início</button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
               {minhasAvaliacoes.length > 0 ? minhasAvaliacoes.map(p => (
-                <div key={p.id} style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px' }}>
+                <div key={p.id} onClick={() => {setSelectedProduct(p); setTelaAtiva('home')}} style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', cursor: 'pointer' }}>
                   <img src={p.imagemPrincipal} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '5px' }} />
-                  <h4 style={{ fontSize: '14px', margin: '5px 0' }}>{p.nome}</h4>
+                  <h4 style={{ fontSize: '13px', margin: '5px 0' }}>{p.nome}</h4>
+                  <Stars style={{ fontSize: '10px' }}>{p.stars}</Stars>
                 </div>
               )) : <p>Você ainda não avaliou produtos.</p>}
             </div>
@@ -208,7 +216,7 @@ function Home() {
         </div>
       )}
 
-      {/* MODAL DE LOGIN E CADASTRO (IGUAIS AOS ANTERIORES) */}
+      {/* MODAL DE LOGIN */}
       {isLoginModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Acesse sua conta</h2>
@@ -219,6 +227,7 @@ function Home() {
         </ModalContent></ModalOverlay>
       )}
 
+      {/* MODAL DE CADASTRO */}
       {isRegisterModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Crie sua conta</h2>
@@ -231,35 +240,64 @@ function Home() {
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL DE AVALIAÇÃO */}
+      {/* MODAL DE AVALIAÇÃO - TUDO RECUPERADO AQUI */}
       {isModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Nova Avaliação</h2>
-          <FormInput placeholder="Produto" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <select value={moeda} onChange={(e) => setMoeda(e.target.value)} style={{ padding: '10px', borderRadius: '8px' }}>
-              <option value="BRL">R$</option><option value="USD">$</option>
+          <FormInput placeholder="Nome do Produto" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
+          
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <select value={moeda} onChange={(e) => {setMoeda(e.target.value); setPreco('');}} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <option value="BRL">R$</option>
+              <option value="USD">$</option>
+              <option value="EUR">€</option>
             </select>
-            <FormInput style={{ flex: 1 }} placeholder="Preço" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
+            <FormInput style={{ flex: 1, marginBottom: 0 }} placeholder="Preço" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
           </div>
-          <textarea placeholder="Sua opinião" value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px' }} />
-          <input type="file" multiple onChange={handleFileChange} />
-          <ActionButton onClick={handleSalvar}>Postar</ActionButton>
+
+          <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
+
+          <div style={{ textAlign: 'left', marginBottom: '10px' }}>
+            <label style={{ fontSize: '12px', color: '#64748b' }}>Sua nota:</label>
+            <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <option value="5">5 Estrelas</option>
+              <option value="4">4 Estrelas</option>
+              <option value="3">3 Estrelas</option>
+              <option value="2">2 Estrelas</option>
+              <option value="1">1 Estrela</option>
+            </select>
+          </div>
+
+          <textarea placeholder="Sua opinião..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }} />
+          
+          <input type="file" multiple onChange={handleFileChange} style={{ marginBottom: '10px' }} />
+          
+          <div style={{ display: 'flex', gap: '5px', marginBottom: '15px', flexWrap: 'wrap' }}>
+            {imagensBase64.map((img, i) => <img key={i} src={img} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '5px' }} />)}
+          </div>
+
+          <ActionButton onClick={handleSalvar}>Postar Avaliação</ActionButton>
           <CloseButton onClick={() => setIsModalOpen(false)}>Cancelar</CloseButton>
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL DE DETALHES COM NOME DO AUTOR */}
+      {/* MODAL DE DETALHES */}
       {selectedProduct && (
         <ModalOverlay onClick={() => setSelectedProduct(null)}>
           <ProductModalContent onClick={(e) => e.stopPropagation()}>
-            <img src={selectedProduct.imagemPrincipal} style={{ width: '100%', borderRadius: '10px' }} />
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px' }}>
+                {(selectedProduct.imagens || [selectedProduct.imagemPrincipal]).map((img, idx) => (
+                    <img key={idx} src={img} style={{ height: '200px', borderRadius: '10px' }} alt="Produto" />
+                ))}
+            </div>
             <h2>{selectedProduct.nome}</h2>
-            {/* EXIBINDO O AUTOR NO DETALHE */}
             <p style={{ color: '#2563eb', fontWeight: 'bold' }}>Avaliado por: {selectedProduct.autor || 'Anônimo'}</p>
-            <p style={{ margin: '15px 0' }}>{selectedProduct.description}</p>
+            <Stars>{selectedProduct.stars}</Stars>
+            <h3 style={{ margin: '10px 0' }}>{selectedProduct.preco}</h3>
+            <p style={{ margin: '15px 0', padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>{selectedProduct.description}</p>
             <BuyButton href={selectedProduct.linkCompra} target="_blank">Onde Comprar</BuyButton>
-            <CloseButton onClick={() => setSelectedProduct(null)}>Voltar</CloseButton>
+            <CloseButton onClick={() => setSelectedProduct(null)} style={{ marginTop: '10px' }}>Voltar</CloseButton>
           </ProductModalContent>
         </ModalOverlay>
       )}
