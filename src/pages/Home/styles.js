@@ -36,6 +36,7 @@ export const SearchContainer = styled.div`
   gap: 15px;
   max-width: 800px;
   margin: 0 auto;
+  align-items: center;
 `;
 
 export const InputBusca = styled.input`
@@ -45,6 +46,20 @@ export const InputBusca = styled.input`
   border: none;
   font-size: 16px;
   outline: none;
+`;
+
+// BOTÃO DE AVALIAR COM AZUL MAIS FORTE PARA DESTAQUE
+export const EvalButton = styled.button`
+  background: #1e40af; /* Azul Navy mais forte */
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.3s;
+  &:hover { background: #1e3a8a; transform: scale(1.05); }
 `;
 
 export const SectionTitle = styled.h2`
@@ -90,7 +105,6 @@ export const Stars = styled.div`
 `;
 
 // --- MODAIS ---
-
 export const ModalOverlay = styled.div`
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -107,11 +121,10 @@ export const ModalContent = styled.div`
   padding: 30px;
   border-radius: 20px;
   width: 90%;
-  max-width: 550px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   animation: ${fadeInModal} 0.3s ease-out forwards;
-  
   h2 { color: #1e293b; margin-bottom: 20px; text-align: center; }
 `;
 
@@ -148,7 +161,6 @@ export const FormSelect = styled.select`
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   outline: none;
-  cursor: pointer;
 `;
 
 export const FormTextArea = styled.textarea`
@@ -167,7 +179,7 @@ export const UploadPhotoContainer = styled.div`
   border-radius: 12px;
   text-align: center;
   background: #f8fafc;
-  label { cursor: pointer; display: block; }
+  label { cursor: pointer; }
   input { display: none; }
 `;
 
@@ -183,25 +195,30 @@ export const ModalFooter = styled.div`
 export const PostButton = styled.button`
   flex: 1; background: #2563eb; color: white; padding: 14px;
   border: none; border-radius: 10px; font-weight: bold; cursor: pointer;
-  &:hover { background: #1d4ed8; }
 `;
 
 export const CancelButton = styled.button`
   flex: 1; background: white; color: #64748b; padding: 14px;
   border: 1px solid #e2e8f0; border-radius: 10px; font-weight: bold; cursor: pointer;
-  &:hover { background: #f1f5f9; }
 `;
 
 export const BuyButton = styled.a`
-  display: inline-block;
-  background: #2563eb;
-  color: white;
-  padding: 12px 25px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: bold;
+  display: inline-block; background: #2563eb; color: white;
+  padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;
 `;
 
-export const Button = styled(PostButton)``; 
-export const ActionButton = styled(PostButton)``; 
-export const CloseButton = styled(CancelButton)``; 
+// BOTÕES DE LOGIN E CADASTRO NO HEADER
+export const LoginButton = styled.button`
+  background: transparent; color: #2563eb; padding: 10px 18px;
+  border: 1px solid #2563eb; border-radius: 20px; font-weight: bold; cursor: pointer;
+`;
+
+export const RegisterButton = styled.button`
+  background: #2563eb; color: white; padding: 10px 18px;
+  border: none; border-radius: 20px; font-weight: bold; cursor: pointer;
+`;
+
+// ALIAS PARA COMPATIBILIDADE
+export const Button = styled(EvalButton)``;
+export const ActionButton = styled(PostButton)``;
+export const CloseButton = styled(CancelButton)``;

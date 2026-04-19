@@ -16,9 +16,10 @@ import {
   Container, Header, Hero, SearchContainer, InputBusca, 
   SectionTitle, ReviewsContainer, ProductCard, ProductImage, 
   ProductInfo, Stars, ModalOverlay, ProductModalContent, 
-  BuyButton, ModalContent, FormInput,
+  BuyButton, ModalContent, FormInput, 
   ModalFieldGroup, InputWrapper, FormTextArea, FormSelect,
-  UploadPhotoContainer, PhotoPreviewGrid, ModalFooter, PostButton, CancelButton 
+  UploadPhotoContainer, PhotoPreviewGrid, ModalFooter, PostButton, CancelButton,
+  LoginButton, RegisterButton, EvalButton // Componentes corrigidos e exportados
 } from './styles';
 
 function Home() {
@@ -195,7 +196,10 @@ function Home() {
               <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer' }}>Sair</button>
             </>
           ) : (
-            <button onClick={() => setIsLoginModalOpen(true)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '20px', cursor: 'pointer' }}>Entrar</button>
+            <>
+              <LoginButton onClick={() => setIsLoginModalOpen(true)}>Entrar</LoginButton>
+              <RegisterButton onClick={() => setIsRegisterModalOpen(true)}>Cadastrar</RegisterButton>
+            </>
           )}
         </div>
       </Header>
@@ -205,8 +209,9 @@ function Home() {
           <Hero>
             <h1>Avaliações Reais de Eletrônicos</h1>
             <SearchContainer>
-              {/* Ajustado para PostButton para evitar o erro de 'Button' não definido */}
-              <PostButton onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")} style={{maxWidth: '200px'}}>+ Avaliar Produto</PostButton>
+              <EvalButton onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")}>
+                + Avaliar Produto
+              </EvalButton>
               <InputBusca placeholder="Buscar produtos ou marcas..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} />
             </SearchContainer>
           </Hero>
@@ -310,7 +315,7 @@ function Home() {
         </ModalOverlay>
       )}
 
-      {/* MODAL CRIAR AVALIAÇÃO - LAYOUT PROFISSIONAL */}
+      {/* MODAL CRIAR AVALIAÇÃO */}
       {isModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Nova Avaliação</h2>
@@ -390,25 +395,26 @@ function Home() {
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAIS LOGIN E CADASTRO */}
+      {/* MODAL LOGIN */}
       {isLoginModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Entrar</h2>
-          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px'}} />
-          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'15px'}} />
+          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px', width:'100%'}} />
+          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'15px', width:'100%'}} />
           <PostButton onClick={handleLogin} style={{width:'100%'}}>Entrar</PostButton>
           <CancelButton onClick={() => setIsLoginModalOpen(false)} style={{width:'100%', marginTop:'10px'}}>Fechar</CancelButton>
           <p style={{fontSize:'12px', textAlign:'center', marginTop:'15px', cursor:'pointer', color:'#2563eb'}} onClick={() => {setIsLoginModalOpen(false); setIsRegisterModalOpen(true);}}>Não tem conta? Cadastre-se</p>
         </ModalContent></ModalOverlay>
       )}
 
+      {/* MODAL CADASTRO */}
       {isRegisterModalOpen && (
         <ModalOverlay><ModalContent>
           <h2>Criar Conta</h2>
-          <FormInput placeholder="Nome Completo" onChange={(e) => setNomeCompleto(e.target.value)} style={{marginBottom:'10px'}} />
-          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px'}} />
-          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'10px'}} />
-          <FormInput type="password" placeholder="Confirmar Senha" onChange={(e) => setConfirmarSenha(e.target.value)} style={{marginBottom:'15px'}} />
+          <FormInput placeholder="Nome Completo" onChange={(e) => setNomeCompleto(e.target.value)} style={{marginBottom:'10px', width:'100%'}} />
+          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px', width:'100%'}} />
+          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'10px', width:'100%'}} />
+          <FormInput type="password" placeholder="Confirmar Senha" onChange={(e) => setConfirmarSenha(e.target.value)} style={{marginBottom:'15px', width:'100%'}} />
           <PostButton onClick={handleCadastro} style={{width:'100%'}}>Cadastrar</PostButton>
           <CancelButton onClick={() => setIsRegisterModalOpen(false)} style={{width:'100%', marginTop:'10px'}}>Voltar</CancelButton>
         </ModalContent></ModalOverlay>
