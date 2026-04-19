@@ -20,30 +20,26 @@ import {
 } from './styles';
 
 function Home() {
-  // --- ESTADOS DE PRODUTOS E BUSCA ---
+  // --- ESTADOS GERAIS ---
   const [produtos, setProdutos] = useState([]);
   const [termoBusca, setTermoBusca] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
-  // --- ESTADOS DE NAVEGAÇÃO E MODAIS ---
   const [telaAtiva, setTelaAtiva] = useState('home'); 
   const [abaPerfil, setAbaPerfil] = useState('dados'); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  
-  // --- ESTADOS DE ZOOM E GALERIA ---
   const [zoomImage, setZoomImage] = useState(null);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
-  // --- ESTADOS DE USUÁRIO ---
+  // --- ESTADOS USUÁRIO ---
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [nomeCompleto, setNomeCompleto] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
 
-  // --- ESTADOS DO FORMULÁRIO ---
+  // --- ESTADOS FORMULÁRIO PRODUTO ---
   const [nome, setNome] = useState('');
   const [marca, setMarca] = useState('');
   const [preco, setPreco] = useState('');
@@ -52,6 +48,31 @@ function Home() {
   const [nota, setNota] = useState('5');
   const [linkCompra, setLinkCompra] = useState('');
   const [imagensBase64, setImagensBase64] = useState([]);
+
+  // --- LISTA DE 20 NOMES DE MARCAS ---
+  const nomesMarcas = [
+    'Samsung', 'Apple', 'Sony', 'LG', 'Dell', 'HP', 'Lenovo', 'ASUS', 
+    'Xiaomi', 'Philips', 'Logitech', 'Razer', 'Corsair', 'Brastemp', 
+    'Consul', 'Nvidia', 'AMD', 'Intel', 'Xbox', 'PlayStation'
+  ];
+
+  // --- ESTILO DE ANIMAÇÃO GLOBAL ---
+  const animacaoStyles = `
+    @keyframes fadeInModal {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes overlayFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .anima-modal {
+      animation: fadeInModal 0.3s ease-out forwards;
+    }
+    .anima-overlay {
+      animation: overlayFade 0.2s ease-out forwards;
+    }
+  `;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -71,7 +92,16 @@ function Home() {
     } catch (error) { console.error("Erro ao buscar:", error); }
   };
 
-  // COMPRESSÃO DE IMAGEM
+  // --- LÓGICA DE BUSCA FUNCIONAL ---
+  const produtosFiltrados = produtos.filter((p) => {
+    const termo = termoBusca.toLowerCase();
+    return (
+      p.nome?.toLowerCase().includes(termo) || 
+      p.marca?.toLowerCase().includes(termo) ||
+      p.description?.toLowerCase().includes(termo)
+    );
+  });
+
   const comprimirImagem = (base64Str) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -141,15 +171,14 @@ function Home() {
     }
   };
 
-  // NAVEGAÇÃO DA GALERIA DE ZOOM
   const nextImageZoom = (e) => {
-    e.stopPropagation(); // Impede que o clique no botão feche o modal
+    e.stopPropagation();
     const imagens = selectedProduct.imagens;
     setCurrentImgIndex((prev) => (prev + 1) % imagens.length);
   };
 
   const prevImageZoom = (e) => {
-    e.stopPropagation(); // Impede que o clique no botão feche o modal
+    e.stopPropagation();
     const imagens = selectedProduct.imagens;
     setCurrentImgIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
   };
@@ -184,6 +213,7 @@ function Home() {
 
   return (
     <Container>
+      <style>{animacaoStyles}</style>
       <Header>
         <div onClick={() => setTelaAtiva('home')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <img src={logoImg} alt="Logo" style={{ height: '42px', width: 'auto', objectFit: 'contain' }} />
@@ -192,10 +222,10 @@ function Home() {
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {usuarioLogado ? (
             <>
-              <span onClick={() => setTelaAtiva('perfil')} style={{ fontSize: '14px', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
+              <span onClick={() => {setTelaAtiva('perfil'); setAbaPerfil('dados');}} style={{ fontSize: '14px', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
                 Olá, {usuarioLogado.displayName}
               </span>
-              <button onClick={() => signOut(auth)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
+              <button onClick={() => signOut(auth)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>Sair</button>
             </>
           ) : (
             <>
@@ -212,14 +242,32 @@ function Home() {
             <h1>Avaliações Reais de Eletrônicos</h1>
             <SearchContainer>
               <Button onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")}>+ Avaliar Produto</Button>
-              <InputBusca placeholder="Buscar produtos..." onChange={(e) => setTermoBusca(e.target.value)} />
+              <InputBusca 
+                placeholder="Buscar produtos ou marcas..." 
+                value={termoBusca}
+                onChange={(e) => setTermoBusca(e.target.value)} 
+              />
             </SearchContainer>
           </Hero>
 
-          <SectionTitle>Últimas avaliações</SectionTitle>
+          {/* GRADE DE MARCAS (ESTÁTICA E CINZA) */}
+          <div style={{ background: 'white', padding: '40px 20px', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '20px', justifyItems: 'center' }}>
+              {nomesMarcas.map((nome, index) => (
+                <span key={index} style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8', transition: '0.3s', cursor: 'default' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#1e293b'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                >
+                  {nome}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <SectionTitle>{termoBusca ? `Resultados para "${termoBusca}"` : "Últimas avaliações"}</SectionTitle>
           <ReviewsContainer>
-            {produtos.filter(p => p.nome.toLowerCase().includes(termoBusca.toLowerCase())).map(p => (
-              <ProductCard key={p.id} onClick={() => { setSelectedProduct(p); setCurrentImgIndex(0); }}>
+            {produtosFiltrados.map(p => (
+              <ProductCard key={p.id} onClick={() => { setSelectedProduct(p); setCurrentImgIndex(0); }} style={{ transition: '0.3s' }}>
                 <ProductImage src={p.imagemPrincipal} />
                 <ProductInfo>
                   <h3>{p.nome}</h3>
@@ -228,127 +276,103 @@ function Home() {
                 </ProductInfo>
               </ProductCard>
             ))}
+            {produtosFiltrados.length === 0 && <p style={{ gridColumn: '1/-1', textAlign: 'center', color: '#64748b', padding: '40px' }}>Nenhum produto encontrado.</p>}
           </ReviewsContainer>
         </>
       ) : (
-        /* TELA DE PERFIL */
-        <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', background: 'white', borderRadius: '15px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-          <h2>Minha Conta</h2>
-          <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', marginTop: '15px' }}>
-            <button onClick={() => setAbaPerfil('dados')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'dados' ? '2px solid #2563eb' : 'none', fontWeight: 'bold', color: abaPerfil === 'dados' ? '#2563eb' : '#64748b' }}>Dados</button>
-            <button onClick={() => setAbaPerfil('minhas-avaliacoes')} style={{ padding: '10px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'minhas-avaliacoes' ? '2px solid #2563eb' : 'none', fontWeight: 'bold', color: abaPerfil === 'minhas-avaliacoes' ? '#2563eb' : '#64748b' }}>Minhas Avaliações</button>
+        <div style={{ minHeight: 'calc(100vh - 80px)', background: '#2563eb', padding: '40px 20px' }}>
+          <div className="anima-modal" style={{ maxWidth: '800px', margin: '0 auto', background: 'white', borderRadius: '20px', padding: '30px' }}>
+            <h2>Minha Conta</h2>
+            <div style={{ display: 'flex', gap: '20px', borderBottom: '2px solid #f1f5f9', marginBottom: '25px' }}>
+              <button onClick={() => setAbaPerfil('dados')} style={{ padding: '12px 20px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'dados' ? '3px solid #2563eb' : 'none', fontWeight: 'bold' }}>Dados Pessoais</button>
+              <button onClick={() => setAbaPerfil('minhas-avaliacoes')} style={{ padding: '12px 20px', border: 'none', background: 'none', cursor: 'pointer', borderBottom: abaPerfil === 'minhas-avaliacoes' ? '3px solid #2563eb' : 'none', fontWeight: 'bold' }}>Minhas Avaliações</button>
+            </div>
+            {abaPerfil === 'dados' ? (
+              <div>
+                <p><strong>Nome:</strong> {usuarioLogado?.displayName}</p>
+                <p><strong>E-mail:</strong> {usuarioLogado?.email}</p>
+                <button onClick={() => setTelaAtiva('home')} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', marginTop: '20px', cursor: 'pointer' }}>Voltar</button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                {minhasAvaliacoes.map(p => (
+                  <div key={p.id} onClick={() => {setSelectedProduct(p); setCurrentImgIndex(0);}} style={{ border: '1px solid #eee', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}>
+                    <img src={p.imagemPrincipal} style={{ width: '100%', borderRadius: '5px' }} />
+                    <p style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '5px' }}>{p.nome}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {abaPerfil === 'dados' ? (
-            <div style={{ lineHeight: '2' }}>
-              <p><strong>Nome:</strong> {usuarioLogado?.displayName}</p>
-              <p><strong>E-mail:</strong> {usuarioLogado?.email}</p>
-              <button onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', padding: '10px', cursor: 'pointer' }}>Voltar</button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
-              {minhasAvaliacoes.map(p => (
-                <div key={p.id} onClick={() => {setSelectedProduct(p); setCurrentImgIndex(0);}} style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', cursor: 'pointer' }}>
-                  <img src={p.imagemPrincipal} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '5px' }} />
-                  <h4 style={{ fontSize: '12px', marginTop: '5px' }}>{p.nome}</h4>
-                </div>
-              ))}
-              {minhasAvaliacoes.length === 0 && <p>Você ainda não fez avaliações.</p>}
-            </div>
-          )}
         </div>
       )}
 
-      {/* MODAL DE DETALHES COM MINIATURAS E ZOOM */}
+      {/* ZOOM MODAL */}
+      {zoomImage && (
+        <ModalOverlay className="anima-overlay" onClick={() => setZoomImage(null)} style={{ background: 'rgba(0,0,0,0.9)', zIndex: 5000 }}>
+          <div className="anima-modal" style={{ position: 'relative', width: '90%', height: '90%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={prevImageZoom} style={{ position: 'absolute', left: '10px', background: 'white', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer' }}>‹</button>
+            <img src={selectedProduct.imagens[currentImgIndex]} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+            <button onClick={nextImageZoom} style={{ position: 'absolute', right: '10px', background: 'white', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer' }}>›</button>
+            <button onClick={() => setZoomImage(null)} style={{ position: 'absolute', top: '0', right: '10px', color: 'white', background: 'none', border: 'none', fontSize: '40px', cursor: 'pointer' }}>×</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* MODAL DETALHES (LAYOUT OPOSTO + "X") */}
       {selectedProduct && (
-        <ModalOverlay onClick={() => setSelectedProduct(null)}>
-          <ProductModalContent onClick={(e) => e.stopPropagation()}>
+        <ModalOverlay className="anima-overlay" onClick={() => setSelectedProduct(null)}>
+          <ProductModalContent className="anima-modal" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', paddingTop: '40px' }}>
+            <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '15px', right: '20px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', color: '#64748b' }}>×</button>
+            
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px' }}>
               {selectedProduct.imagens.map((img, idx) => (
-                <img 
-                  key={idx} 
-                  src={img} 
-                  onClick={() => { setZoomImage(true); setCurrentImgIndex(idx); }} 
-                  style={{ height: '150px', borderRadius: '10px', cursor: 'zoom-in', border: currentImgIndex === idx ? '2px solid #2563eb' : 'none' }} 
-                />
+                <img key={idx} src={img} onClick={() => { setZoomImage(true); setCurrentImgIndex(idx); }} style={{ height: '150px', borderRadius: '10px', cursor: 'zoom-in', border: currentImgIndex === idx ? '3px solid #2563eb' : 'none' }} />
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2>{selectedProduct.nome}</h2>
-              {usuarioLogado?.uid === selectedProduct.autorId && (
-                <button onClick={() => handleExcluir(selectedProduct.id)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Excluir</button>
-              )}
-            </div>
+            <h2>{selectedProduct.nome}</h2>
             <Stars>{selectedProduct.stars}</Stars>
             <p style={{ margin: '15px 0', lineHeight: '1.6' }}>{selectedProduct.description}</p>
-            <BuyButton href={selectedProduct.linkCompra} target="_blank">Ver Produto</BuyButton>
-            <CloseButton onClick={() => setSelectedProduct(null)}>Fechar</CloseButton>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                <BuyButton href={selectedProduct.linkCompra} target="_blank" style={{ margin: 0 }}>Ver Produto</BuyButton>
+                {usuarioLogado?.uid === selectedProduct.autorId && (
+                    <button onClick={() => handleExcluir(selectedProduct.id)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Excluir Avaliação</button>
+                )}
+            </div>
           </ProductModalContent>
         </ModalOverlay>
       )}
 
-      {/* ZOOM MODAL RESTAURADO COM SETAS E SEM TEXTO */}
-      {zoomImage && (
-        <ModalOverlay onClick={() => setZoomImage(null)} style={{ background: 'rgba(0,0,0,0.9)', zIndex: 5000 }}>
-          <div style={{ position: 'relative', width: '90%', height: '90%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            
-            {/* Seta Esquerda */}
-            <button 
-              onClick={prevImageZoom} 
-              style={{ position: 'absolute', left: '10px', background: 'white', border: 'none', borderRadius: '50%', width: '45px', height: '45px', cursor: 'pointer', fontSize: '24px', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.3)', zIndex: 5010 }}
-            >
-              ‹
-            </button>
-            
-            <img src={selectedProduct.imagens[currentImgIndex]} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-            
-            {/* Seta Direita */}
-            <button 
-              onClick={nextImageZoom} 
-              style={{ position: 'absolute', right: '10px', background: 'white', border: 'none', borderRadius: '50%', width: '45px', height: '45px', cursor: 'pointer', fontSize: '24px', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.3)', zIndex: 5010 }}
-            >
-              ›
-            </button>
-
-            {/* Botão Fechar (X) no topo */}
-            <button 
-              onClick={() => setZoomImage(null)} 
-              style={{ position: 'absolute', top: '-10px', right: '10px', color: 'white', background: 'none', border: 'none', fontSize: '40px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              ×
-            </button>
-          </div>
-        </ModalOverlay>
-      )}
-
-      {/* MODAL DE POSTAGEM */}
+      {/* MODAL POSTAGEM */}
       {isModalOpen && (
-        <ModalOverlay><ModalContent>
+        <ModalOverlay className="anima-overlay"><ModalContent className="anima-modal">
           <h2>Nova Avaliação</h2>
           <FormInput placeholder="Produto" value={nome} onChange={(e) => setNome(e.target.value)} />
           <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
           <div style={{ display: 'flex', gap: '10px' }}>
-            <select value={moeda} onChange={(e) => setMoeda(e.target.value)} style={{ padding: '10px', borderRadius: '8px' }}>
+            <select value={moeda} onChange={(e) => setMoeda(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
               <option value="BRL">R$</option><option value="EUR">€</option><option value="USD">$</option>
             </select>
             <FormInput style={{ flex: 1 }} placeholder="Preço" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
           </div>
           <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
-          <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }}>
+          <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <option value="5">5 Estrelas</option><option value="4">4 Estrelas</option><option value="3">3 Estrelas</option>
           </select>
-          <textarea placeholder="Descrição..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', borderRadius: '8px', marginBottom: '10px' }} />
+          <textarea placeholder="Descrição..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }} />
           <input type="file" multiple onChange={handleFileChange} />
           <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' }}>
             {imagensBase64.map((img, i) => <img key={i} src={img} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />)}
           </div>
-          <ActionButton onClick={handleSalvar} style={{ marginTop: '15px' }}>Postar</ActionButton>
+          <ActionButton onClick={handleSalvar} style={{ marginTop: '15px' }}>Postar Avaliação</ActionButton>
           <CloseButton onClick={() => setIsModalOpen(false)}>Cancelar</CloseButton>
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL LOGIN */}
+      {/* MODAIS DE LOGIN E CADASTRO */}
       {isLoginModalOpen && (
-        <ModalOverlay><ModalContent>
+        <ModalOverlay className="anima-overlay"><ModalContent className="anima-modal">
           <h2>Entrar</h2>
           <FormInput type="email" placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} />
           <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} />
@@ -357,9 +381,8 @@ function Home() {
         </ModalContent></ModalOverlay>
       )}
 
-      {/* MODAL CADASTRO */}
       {isRegisterModalOpen && (
-        <ModalOverlay><ModalContent>
+        <ModalOverlay className="anima-overlay"><ModalContent className="anima-modal">
           <h2>Criar Conta</h2>
           <FormInput placeholder="Nome Completo" onChange={(e) => setNomeCompleto(e.target.value)} />
           <FormInput type="email" placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} />
