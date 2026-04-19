@@ -202,6 +202,6 @@ export const BuyButton = styled.a`
   font-weight: bold;
 `;
 
-export const Button = styled(PostButton)``; // Alias para compatibilidade
-export const ActionButton = styled(PostButton)``; // Alias para compatibilidade
-export const CloseButton = styled(CancelButton)``; // Alias para compatibilidade
+export const Button = styled(PostButton)``; 
+export const ActionButton = styled(PostButton)``; 
+export const CloseButton = styled(CancelButton)``; 
