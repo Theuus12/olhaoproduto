@@ -13,10 +13,12 @@ import {
 import logoImg from '../../assets/logo.png'; 
 
 import { 
-  Container, Header, Hero, Button, SearchContainer, InputBusca, 
+  Container, Header, Hero, SearchContainer, InputBusca, 
   SectionTitle, ReviewsContainer, ProductCard, ProductImage, 
   ProductInfo, Stars, ModalOverlay, ProductModalContent, 
-  BuyButton, ModalContent, FormInput, ActionButton, CloseButton 
+  BuyButton, ModalContent, FormInput,
+  ModalFieldGroup, InputWrapper, FormTextArea, FormSelect,
+  UploadPhotoContainer, PhotoPreviewGrid, ModalFooter, PostButton, CancelButton 
 } from './styles';
 
 function Home() {
@@ -45,8 +47,8 @@ function Home() {
 
   // --- ESTADOS FORMULÁRIO PRODUTO ---
   const [nome, setNome] = useState('');
-  const [marca, setMarca] = useState('');
-  const [categoriaPost, setCategoriaPost] = useState('Celulares'); // ESTADO DA CATEGORIA
+  const [marcaPost, setMarcaPost] = useState('Samsung'); 
+  const [categoriaPost, setCategoriaPost] = useState('Celulares');
   const [preco, setPreco] = useState('');
   const [moeda, setMoeda] = useState('BRL'); 
   const [descricao, setDescricao] = useState('');
@@ -63,18 +65,6 @@ function Home() {
 
   const categorias = ['Celulares', 'Notebooks', 'Eletrodomésticos', 'Monitores', 'Periféricos', 'Hardware', 'Consoles'];
 
-  // --- ANIMAÇÕES E ESTILOS ADICIONAIS ---
-  const animacaoStyles = `
-    @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
-    .anima-modal { animation: fadeInModal 0.3s ease-out forwards; }
-    .anima-overlay { animation: overlayFade 0.2s ease-out forwards; }
-    .brand-item:hover { color: #1e293b !important; transform: scale(1.1); }
-    .cat-btn { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #f8fafc; font-weight: 600; color: #475569; text-align: center; }
-    .cat-btn:hover { background: #2563eb; color: white; border-color: #2563eb; }
-    .select-estilizado { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-size: 14px; color: #475569; }
-  `;
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setUsuarioLogado(user));
     buscarProdutos();
@@ -87,6 +77,11 @@ function Home() {
       const snapshot = await getDocs(q);
       setProdutos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) { console.error("Erro ao buscar:", error); }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setTelaAtiva('home');
   };
 
   const produtosFiltrados = produtos.filter((p) => {
@@ -131,7 +126,7 @@ function Home() {
     if (!nome || !descricao || imagensBase64.length === 0) return alert("Preencha os campos!");
     try {
       await addDoc(collection(db, 'produtos'), {
-        nome, marca, categoria: categoriaPost, preco, moeda,
+        nome, marca: marcaPost, categoria: categoriaPost, preco, moeda,
         description: descricao,
         stars: '★'.repeat(Number(nota)) + '☆'.repeat(5 - Number(nota)), 
         linkCompra: linkCompra.startsWith('http') ? linkCompra : `https://${linkCompra}`,
@@ -141,7 +136,7 @@ function Home() {
         autor: usuarioLogado.displayName,
         autorId: usuarioLogado.uid
       });
-      alert("Postado!");
+      alert("Avaliação postada com sucesso!");
       setIsModalOpen(false);
       limparCampos();
       buscarProdutos(); 
@@ -149,7 +144,7 @@ function Home() {
   };
 
   const limparCampos = () => {
-    setNome(''); setMarca(''); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]); setCategoriaPost('Celulares');
+    setNome(''); setMarcaPost('Samsung'); setPreco(''); setDescricao(''); setNota('5'); setLinkCompra(''); setImagensBase64([]); setCategoriaPost('Celulares');
   };
 
   const handleExcluir = async (id) => {
@@ -161,9 +156,6 @@ function Home() {
       } catch (e) { alert("Erro ao excluir."); }
     }
   };
-
-  const nextImageZoom = (e) => { e.stopPropagation(); setCurrentImgIndex((prev) => (prev + 1) % selectedProduct.imagens.length); };
-  const prevImageZoom = (e) => { e.stopPropagation(); setCurrentImgIndex((prev) => (prev - 1 + selectedProduct.imagens.length) % selectedProduct.imagens.length); };
 
   const formatarMoeda = (valor, tipoMoeda) => {
     let v = valor.replace(/\D/g, '');
@@ -188,9 +180,10 @@ function Home() {
     } catch (e) { alert("Erro ao cadastrar."); }
   };
 
+  const minhasAvaliacoes = produtos.filter(p => p.autorId === usuarioLogado?.uid);
+
   return (
     <Container>
-      <style>{animacaoStyles}</style>
       <Header>
         <div onClick={() => { setTelaAtiva('home'); setFiltroAtivo({marca:'', categoria:''}); }} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <img src={logoImg} alt="Logo" style={{ height: '42px' }} />
@@ -199,13 +192,10 @@ function Home() {
           {usuarioLogado ? (
             <>
               <span onClick={() => {setTelaAtiva('perfil'); setAbaPerfil('dados');}} style={{ fontSize: '14px', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>Olá, {usuarioLogado.displayName}</span>
-              <button onClick={() => signOut(auth)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer' }}>Sair</button>
+              <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '20px', cursor: 'pointer' }}>Sair</button>
             </>
           ) : (
-            <>
-              <button onClick={() => setIsLoginModalOpen(true)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '20px', cursor: 'pointer' }}>Entrar</button>
-              <button onClick={() => setIsRegisterModalOpen(true)} style={{ background: 'white', color: '#2563eb', border: '2px solid #2563eb', padding: '8px 18px', borderRadius: '20px', cursor: 'pointer' }}>Cadastrar</button>
-            </>
+            <button onClick={() => setIsLoginModalOpen(true)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '20px', cursor: 'pointer' }}>Entrar</button>
           )}
         </div>
       </Header>
@@ -215,7 +205,8 @@ function Home() {
           <Hero>
             <h1>Avaliações Reais de Eletrônicos</h1>
             <SearchContainer>
-              <Button onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")}>+ Avaliar Produto</Button>
+              {/* Ajustado para PostButton para evitar o erro de 'Button' não definido */}
+              <PostButton onClick={() => usuarioLogado ? setIsModalOpen(true) : alert("Faça login!")} style={{maxWidth: '200px'}}>+ Avaliar Produto</PostButton>
               <InputBusca placeholder="Buscar produtos ou marcas..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} />
             </SearchContainer>
           </Hero>
@@ -258,16 +249,23 @@ function Home() {
               <div>
                 <p><strong>Nome:</strong> {usuarioLogado?.displayName}</p>
                 <p><strong>E-mail:</strong> {usuarioLogado?.email}</p>
-                <button onClick={() => setTelaAtiva('home')} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', marginTop: '20px', cursor: 'pointer' }}>Voltar</button>
+                <PostButton onClick={() => setTelaAtiva('home')} style={{ marginTop: '20px', maxWidth: '200px' }}>Voltar para Home</PostButton>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
-                {minhasAvaliacoes.map(p => (
-                  <div key={p.id} onClick={() => {setSelectedProduct(p); setCurrentImgIndex(0);}} style={{ border: '1px solid #eee', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}>
-                    <img src={p.imagemPrincipal} style={{ width: '100%', borderRadius: '5px' }} />
-                    <p style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '5px' }}>{p.nome}</p>
+                {minhasAvaliacoes.length > 0 ? (
+                  minhasAvaliacoes.map(p => (
+                    <div key={p.id} onClick={() => {setSelectedProduct(p); setCurrentImgIndex(0);}} style={{ border: '1px solid #eee', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}>
+                      <img src={p.imagemPrincipal} style={{ width: '100%', borderRadius: '5px' }} />
+                      <p style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '5px' }}>{p.nome}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px' }}>
+                    <p style={{ color: '#64748b', marginBottom: '15px' }}>Você ainda não fez nenhuma avaliação.</p>
+                    <PostButton onClick={() => { setTelaAtiva('home'); setIsModalOpen(true); }} style={{maxWidth:'300px', margin:'0 auto'}}>Fazer minha primeira avaliação</PostButton>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -277,22 +275,22 @@ function Home() {
       {/* MODAL CATEGORIAS (MARCAS) */}
       {marcaSelecionada && (
         <ModalOverlay onClick={() => setMarcaSelecionada(null)} style={{zIndex: 2000}}>
-          <ModalContent className="anima-modal" onClick={e => e.stopPropagation()} style={{maxWidth: '400px'}}>
+          <ModalContent onClick={e => e.stopPropagation()} style={{maxWidth: '400px'}}>
             <h3>Categorias {marcaSelecionada}</h3>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px'}}>
               {categorias.map(cat => (
-                <div key={cat} className="cat-btn" onClick={() => { setFiltroAtivo({ marca: marcaSelecionada, categoria: cat }); setMarcaSelecionada(null); }}>{cat}</div>
+                <div key={cat} style={{padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', textAlign: 'center'}} onClick={() => { setFiltroAtivo({ marca: marcaSelecionada, categoria: cat }); setMarcaSelecionada(null); }}>{cat}</div>
               ))}
             </div>
-            <CloseButton onClick={() => setMarcaSelecionada(null)} style={{marginTop: '15px', width:'100%'}}>Fechar</CloseButton>
+            <CancelButton onClick={() => setMarcaSelecionada(null)} style={{marginTop: '15px'}}>Fechar</CancelButton>
           </ModalContent>
         </ModalOverlay>
       )}
 
-      {/* MODAL DETALHES */}
+      {/* MODAL DETALHES COM ZOOM */}
       {selectedProduct && (
-        <ModalOverlay className="anima-overlay" onClick={() => setSelectedProduct(null)}>
-          <ProductModalContent className="anima-modal" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', paddingTop: '40px' }}>
+        <ModalOverlay onClick={() => setSelectedProduct(null)}>
+          <ProductModalContent onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '15px', right: '20px', background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }}>×</button>
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px' }}>
               {selectedProduct.imagens.map((img, idx) => (
@@ -303,7 +301,7 @@ function Home() {
             <Stars>{selectedProduct.stars}</Stars>
             <p style={{ margin: '15px 0' }}>{selectedProduct.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <BuyButton href={selectedProduct.linkCompra} target="_blank" style={{margin:0}}>Ver Produto</BuyButton>
+                <BuyButton href={selectedProduct.linkCompra} target="_blank">Ver Produto</BuyButton>
                 {usuarioLogado?.uid === selectedProduct.autorId && (
                     <button onClick={() => handleExcluir(selectedProduct.id)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Excluir</button>
                 )}
@@ -312,66 +310,117 @@ function Home() {
         </ModalOverlay>
       )}
 
-      {/* ZOOM MODAL */}
-      {zoomImage && (
-        <ModalOverlay onClick={() => setZoomImage(null)} style={{ background: 'rgba(0,0,0,0.9)', zIndex: 5000 }}>
-          <button onClick={prevImageZoom} style={{ position: 'absolute', left: '20px', background: 'white', borderRadius: '50%', width: '40px', height: '40px' }}>‹</button>
-          <img src={selectedProduct.imagens[currentImgIndex]} style={{ maxHeight: '90%', maxWidth: '90%' }} />
-          <button onClick={nextImageZoom} style={{ position: 'absolute', right: '20px', background: 'white', borderRadius: '50%', width: '40px', height: '40px' }}>›</button>
-        </ModalOverlay>
-      )}
-
-      {/* MODAL CRIAR AVALIAÇÃO (COM CAMPO CATEGORIA ADICIONADO) */}
+      {/* MODAL CRIAR AVALIAÇÃO - LAYOUT PROFISSIONAL */}
       {isModalOpen && (
-        <ModalOverlay className="anima-overlay"><ModalContent className="anima-modal">
+        <ModalOverlay><ModalContent>
           <h2>Nova Avaliação</h2>
-          <FormInput placeholder="Nome do Produto" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <FormInput placeholder="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} />
           
-          {/* SELETOR DE CATEGORIA ADICIONADO ABAIXO */}
-          <label style={{display:'block', fontSize:'12px', color:'#64748b', marginBottom:'5px'}}>Selecione a Categoria:</label>
-          <select className="select-estilizado" value={categoriaPost} onChange={(e) => setCategoriaPost(e.target.value)}>
-            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <InputWrapper>
+            <label>Nome do Produto:</label>
+            <FormInput placeholder="Ex: Monitor Gamer 24 Pol" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </InputWrapper>
+          
+          <ModalFieldGroup>
+            <InputWrapper>
+              <label>Marca:</label>
+              <FormSelect value={marcaPost} onChange={(e) => setMarcaPost(e.target.value)}>
+                {nomesMarcas.sort().map(m => <option key={m} value={m}>{m}</option>)}
+              </FormSelect>
+            </InputWrapper>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <select value={moeda} onChange={(e) => setMoeda(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}><option value="BRL">R$</option><option value="USD">$</option></select>
-            <FormInput style={{ flex: 1 }} placeholder="Preço" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
-          </div>
-          <FormInput placeholder="Link de Compra" value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
-          <select value={nota} onChange={(e) => setNota(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border:'1px solid #e2e8f0' }}><option value="5">5 Estrelas</option><option value="4">4 Estrelas</option><option value="3">3 Estrelas</option></select>
-          <textarea placeholder="Sua descrição..." value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', height: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-          <input type="file" multiple onChange={handleFileChange} style={{marginTop: '10px'}} />
-          <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' }}>
-            {imagensBase64.map((img, i) => <img key={i} src={img} style={{ width: '40px', height: '40px', borderRadius: '4px' }} />)}
-          </div>
-          <ActionButton onClick={handleSalvar} style={{ marginTop: '15px' }}>Postar Avaliação</ActionButton>
-          <CloseButton onClick={() => setIsModalOpen(false)}>Cancelar</CloseButton>
+            <InputWrapper>
+              <label>Categoria:</label>
+              <FormSelect value={categoriaPost} onChange={(e) => setCategoriaPost(e.target.value)}>
+                {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+              </FormSelect>
+            </InputWrapper>
+          </ModalFieldGroup>
+
+          <ModalFieldGroup style={{ gridTemplateColumns: '80px 1fr' }}>
+            <InputWrapper>
+              <label>Moeda:</label>
+              <FormSelect value={moeda} onChange={(e) => setMoeda(e.target.value)}>
+                  <option value="BRL">R$</option>
+                  <option value="USD">$</option>
+                  <option value="EUR">€</option>
+              </FormSelect>
+            </InputWrapper>
+            <InputWrapper>
+              <label>Preço:</label>
+              <FormInput placeholder="0,00" value={preco} onChange={(e) => setPreco(formatarMoeda(e.target.value, moeda))} />
+            </InputWrapper>
+          </ModalFieldGroup>
+
+          <InputWrapper>
+            <label>Link de Compra:</label>
+            <FormInput placeholder="https://..." value={linkCompra} onChange={(e) => setLinkCompra(e.target.value)} />
+          </InputWrapper>
+          
+          <InputWrapper>
+            <label>Sua Nota:</label>
+            <FormSelect value={nota} onChange={(e) => setNota(e.target.value)}>
+                <option value="5">★★★★★ Excelente</option>
+                <option value="4">★★★★☆ Muito Bom</option>
+                <option value="3">★★★☆☆ Bom</option>
+                <option value="2">★★☆☆☆ Regular</option>
+                <option value="1">★☆☆☆☆ Ruim</option>
+            </FormSelect>
+          </InputWrapper>
+
+          <InputWrapper>
+            <label>Descrição:</label>
+            <FormTextArea placeholder="O que achou do produto?" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+          </InputWrapper>
+          
+          <UploadPhotoContainer>
+            <label htmlFor="file-upload">
+              <span style={{fontSize: '24px'}}>⊕</span>
+              <p>{imagensBase64.length > 0 ? `${imagensBase64.length} fotos selecionadas` : "Adicionar Fotos"}</p>
+            </label>
+            <input id="file-upload" type="file" multiple onChange={handleFileChange} accept="image/*" />
+            <PhotoPreviewGrid>
+              {imagensBase64.map((img, i) => <img key={i} src={img} alt="preview" />)}
+            </PhotoPreviewGrid>
+          </UploadPhotoContainer>
+
+          <ModalFooter>
+              <PostButton onClick={handleSalvar}>Postar Avaliação</PostButton>
+              <CancelButton onClick={() => setIsModalOpen(false)}>Cancelar</CancelButton>
+          </ModalFooter>
         </ModalContent></ModalOverlay>
       )}
 
       {/* MODAIS LOGIN E CADASTRO */}
       {isLoginModalOpen && (
-        <ModalOverlay><ModalContent className="anima-modal">
+        <ModalOverlay><ModalContent>
           <h2>Entrar</h2>
-          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} />
-          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} />
-          <ActionButton onClick={handleLogin}>Entrar</ActionButton>
-          <CloseButton onClick={() => setIsLoginModalOpen(false)}>Fechar</CloseButton>
+          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px'}} />
+          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'15px'}} />
+          <PostButton onClick={handleLogin} style={{width:'100%'}}>Entrar</PostButton>
+          <CancelButton onClick={() => setIsLoginModalOpen(false)} style={{width:'100%', marginTop:'10px'}}>Fechar</CancelButton>
+          <p style={{fontSize:'12px', textAlign:'center', marginTop:'15px', cursor:'pointer', color:'#2563eb'}} onClick={() => {setIsLoginModalOpen(false); setIsRegisterModalOpen(true);}}>Não tem conta? Cadastre-se</p>
         </ModalContent></ModalOverlay>
       )}
 
       {isRegisterModalOpen && (
-        <ModalOverlay><ModalContent className="anima-modal">
+        <ModalOverlay><ModalContent>
           <h2>Criar Conta</h2>
-          <FormInput placeholder="Nome Completo" onChange={(e) => setNomeCompleto(e.target.value)} />
-          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} />
-          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} />
-          <FormInput type="password" placeholder="Confirmar Senha" onChange={(e) => setConfirmarSenha(e.target.value)} />
-          <ActionButton onClick={handleCadastro}>Cadastrar</ActionButton>
-          <CloseButton onClick={() => setIsRegisterModalOpen(false)}>Voltar</CloseButton>
+          <FormInput placeholder="Nome Completo" onChange={(e) => setNomeCompleto(e.target.value)} style={{marginBottom:'10px'}} />
+          <FormInput placeholder="E-mail" onChange={(e) => setEmail(e.target.value)} style={{marginBottom:'10px'}} />
+          <FormInput type="password" placeholder="Senha" onChange={(e) => setSenha(e.target.value)} style={{marginBottom:'10px'}} />
+          <FormInput type="password" placeholder="Confirmar Senha" onChange={(e) => setConfirmarSenha(e.target.value)} style={{marginBottom:'15px'}} />
+          <PostButton onClick={handleCadastro} style={{width:'100%'}}>Cadastrar</PostButton>
+          <CancelButton onClick={() => setIsRegisterModalOpen(false)} style={{width:'100%', marginTop:'10px'}}>Voltar</CancelButton>
         </ModalContent></ModalOverlay>
       )}
+
+      {/* ZOOM MODAL */}
+      {zoomImage && (
+        <ModalOverlay onClick={() => setZoomImage(null)} style={{ background: 'rgba(0,0,0,0.9)', zIndex: 5000 }}>
+          <img src={selectedProduct.imagens[currentImgIndex]} style={{ maxHeight: '90%', maxWidth: '90%' }} alt="Zoom" />
+        </ModalOverlay>
+      )}
+
     </Container>
   );
 }
