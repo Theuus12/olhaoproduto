@@ -1,4 +1,10 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { createGlobalStyle, keyframes } from 'styled-components';
+
+export const GlobalStyle = createGlobalStyle`
+  * { box-sizing: border-box; }
+  html, body, #root { min-height: 100%; margin: 0; }
+  body { background: #080a12; }
+`;
 
 const fadeInModal = keyframes`from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); }`;
 

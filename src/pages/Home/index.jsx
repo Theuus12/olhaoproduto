@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs, query, orderBy, doc, deleteDoc } from 'fir
 import { onAuthStateChanged, signOut, updateProfile, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 import { 
-  Container, Header, Hero, SearchContainer, InputBusca, 
+  GlobalStyle, Container, Header, Hero, SearchContainer, InputBusca, 
   SectionTitle, ReviewsContainer, ProductCard, ProductImage, 
   ProductInfo, Stars, ModalOverlay, ModalContent, FormInput, 
   FilterButton, EvalButton, FormTextArea, FormSelect, PostButton, CancelButton,
@@ -65,7 +65,7 @@ const demoProducts = demoCatalog.map((product, productIndex) => {
 const productImages = (product) => [...new Set([product.imagemPrincipal, ...(Array.isArray(product.imagens) ? product.imagens : [])].filter(Boolean))];
 
 function Home() {
-  const [produtos, setProdutos] = useState([]);
+  const [produtos, setProdutos] = useState(demoProducts);
   const [termoBusca, setTermoBusca] = useState('');
   const [telaAtiva, setTelaAtiva] = useState('home'); 
   
@@ -171,7 +171,9 @@ function Home() {
   });
 
   return (
-    <Container>
+    <>
+      <GlobalStyle />
+      <Container>
       <Header>
         <div onClick={() => setTelaAtiva('home')} style={{ cursor: 'pointer' }}>
           <div className="brand-lockup" aria-label="Olha o Produto">
@@ -372,7 +374,8 @@ function Home() {
           </ModalContent>
         </ModalOverlay>
       )}
-    </Container>
+      </Container>
+    </>
   );
 }
 
